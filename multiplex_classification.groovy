@@ -5,6 +5,7 @@ import qupath.lib.objects.PathRootObject
 import qupath.lib.objects.PathDetectionObject
 import qupath.lib.gui.scripting.QPEx
 import ij.gui.GenericDialog
+import qupath.lib.common.GeneralTools
 
 
 CHANNELS = "DAPI, CD44v6, Ki67"
@@ -22,8 +23,8 @@ SPLIT_BY_SHAPE = true
 CELL_EXPANSION = 5    // micron
 INCLUDE_NUCLEUS = true
 SMOOTH_BOUNDERIES = true
-
-
+OUTPUT_PATH = null
+DEFAULT_OUTPUT_FILENAME = 'measurements.tsv'
 main()
 
 def main() {
@@ -37,63 +38,36 @@ def main() {
     def selectedChannels = ""
     def listOfChannels = []
     if (batchIndex<1) {
-        def gd = new GenericDialog("Multiplex Analysis Options")
-        gd.setInsets(0, 0, 0)
-        gd.addMessage("channels:")
-        gd.setInsets(0, 0, 0)
-        gd.addTextAreas(CHANNELS, null, 3, 24)
-        gd.setInsets(0, 0, 0)
-        gd.addChoice("classifier: ", CLASSIFIERS, SELECTED_CLASSIFIER)
-        gd.setInsets(0, 40, 0)
-        gd.addMessage("Detection Parameters")
-        gd.setInsets(0, 60, 0)
-        gd.addMessage("Setup Parameters")
-        gd.setInsets(0, 65, 0)
-        gd.addChoice("detection channel: ", CHANNELS.split(","), DETECTION_CHANNEL)
-        gd.showDialog()
-        if (gd.wasCanceled()) return
-        CHANNELS = gd.getNextText();
-        CHANNELS = CHANNELS.replaceAll("\\s","")    // Remove whitespace
-        SELECTED_CLASSIFIER = gd.getNextChoice();
-        DETECTION_CHANNEL
+        ok = getOptionsFromUser()
+        if (!ok) return;
     }
     print(["selected channels", CHANNELS.split(",")])
     print(["selected classifier", SELECTED_CLASSIFIER])
     
-    /** OPTIONS, modify as necessary */
-    def classesAndColours = ["DAPI": ColorTools.makeRGB(0,0,255), "Vimentin": ColorTools.makeRGB(0,255,0), "PTK7": ColorTools.makeRGB(255,0,0)]
     setImageType('FLUORESCENCE');
     setChannelNames(
         *CHANNELS.split(",")
     )
-    
-    
-    /** Setup */
-    def pathClasses = getQuPath().getAvailablePathClasses()
-    def listOfClasses = []
-    for (cc in classesAndColours) {
-        listOfClasses.add(getPathClass(cc.key, cc.value))
-    }    
-    pathClasses.addAll(listOfClasses)
+
     createFullImageAnnotation(true) 
     
     /** Run the analysis on the project */
     runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', 
-        '{"detectionImage":"DAPI", \
-        "requestedPixelSizeMicrons":0.5, \
-        "backgroundRadiusMicrons":8.0, \
-        "backgroundByReconstruction":true, \
-        "medianRadiusMicrons":0.0, \
-        "sigmaMicrons":1.5, \
-        "minAreaMicrons":10.0, \
-        "maxAreaMicrons":400.0, \
-        "threshold":100.0, \
-        "watershedPostProcess":true, \
-        "cellExpansionMicrons":5.0, \
-        "includeNuclei":true, \
-        "smoothBoundaries":true, \
+        '{"detectionImage":'+DETECTION_CHANNEL+', \
+        "requestedPixelSizeMicrons":'+PIXEL_SIZE+', \
+        "backgroundRadiusMicrons":'+BACKGROUND_RADIUS+', \
+        "backgroundByReconstruction":'+OPENING_BY_RECONSTRUCTION+', \
+        "medianRadiusMicrons":'+MEDIAN_FILTER_RADIUS+', \
+        "sigmaMicrons":'+SIGMA+', \
+        "minAreaMicrons":'+MIN_AREA+', \
+        "maxAreaMicrons":'+MAX_AREA+', \
+        "threshold":'+THRESHOLD+', \
+        "watershedPostProcess":'+SPLIT_BY_SHAPE+', \
+        "cellExpansionMicrons":'+CELL_EXPANSION+', \
+        "includeNuclei":'+INCLUDE_NUCLEUS+', \
+        "smoothBoundaries":'+SMOOTH_BOUNDERIES+', \
         "makeMeasurements":true}')
-    runObjectClassifier("composite_CD44_Ki67")
+    runObjectClassifier(SELECTED_CLASSIFIER)
     
     
     /** Export the measurements as a tsv-file */
@@ -124,4 +98,72 @@ def getProjectFolder() {
     projectFile = new File(pro.getPath().toString())
     projectFolder = projectFile.getParentFile()
     return projectFolder
+}
+
+def getOptionsFromUser() {
+    setOutputPath()
+    def gd = new GenericDialog("Multiplex Analysis Options")
+    gd.addMessage("Batch Parameters")
+     
+    gd.addMessage("channels:")
+    gd.setInsets(0, 20, 0)
+    gd.addTextAreas(CHANNELS, null, 2, 16)
+    gd.addChoice("classifier: ", CLASSIFIERS, SELECTED_CLASSIFIER)
+    gd.addFileField("output file: ", OUTPUT_PATH, 24)
+    
+    gd.addMessage("Detection Parameters (Setup)")
+    gd.addChoice("detection channel: ", CHANNELS.split(","), DETECTION_CHANNEL)
+    gd.addToSameRow()
+    gd.addNumericField("pixel size (µm): ", PIXEL_SIZE)  
+    
+    gd.addMessage("Detection Parameters (Nucleus)")
+    gd.addNumericField("background radius (µm): ", BACKGROUND_RADIUS)
+    gd.addToSameRow()
+    gd.addCheckbox("use opening by reconstruction", OPENING_BY_RECONSTRUCTION)
+    gd.addNumericField("median filter radius (µm): ", MEDIAN_FILTER_RADIUS)
+    gd.addToSameRow()
+    gd.addNumericField("sigma (µm): ", SIGMA)
+    gd.addNumericField("min. area (µm²)", MIN_AREA)
+    gd.addToSameRow()
+    gd.addNumericField("max. area (µm²)", MAX_AREA)
+    gd.addMessage("Detection Parameters (Intensity)")
+    gd.addNumericField("threshold: ", THRESHOLD)
+    gd.addToSameRow()
+    gd.addCheckbox("split by shape", SPLIT_BY_SHAPE)
+    gd.addMessage("Detection Parameters (Cell)")
+    gd.addNumericField("cell expansion (µm)", CELL_EXPANSION)
+    gd.addToSameRow()
+    gd.addCheckbox("include nucleus", INCLUDE_NUCLEUS)
+    gd.addMessage("Detection Parameters (General)")
+    gd.addCheckbox("smooth boundaries", SMOOTH_BOUNDERIES)
+    gd.showDialog()
+    if (gd.wasCanceled()) return false
+    CHANNELS = gd.getNextText();
+    CHANNELS = CHANNELS.replaceAll("\\s","")    // Remove whitespace
+    SELECTED_CLASSIFIER = gd.getNextChoice()
+    OUTPUT_PATH = gd.getNextString()
+    DETECTION_CHANNEL = gd.getNextChoice()
+    PIXEL_SIZE = gd.getNextNumber()
+    BACKGROUND_RADIUS = gd.getNextNumber()
+    OPENING_BY_RECONSTRUCTION = gd.getNextBoolean()
+    MEDIAN_FILTER_RADIUS = gd.getNextNumber()
+    SIGMA = gd.getNextNumber()
+    MIN_AREA = gd.getNextNumber()
+    MAX_AREA = gd.getNextNumber()
+    THRESHOLD = gd.getNextNumber()        
+    SPLIT_BY_SHAPE = gd.getNextBoolean()
+    CELL_EXPANSION = gd.getNextNumber()
+    INCLUDE_NUCLEUS = gd.getNextBoolean()
+    SMOOTH_BOUNDERIES = gd.getNextBoolean()
+    return true
+}
+
+
+def setOutputPath() {
+    projectFolder = getProjectFolder()
+    def qupathGUI = QPEx.getQuPath()
+    def currentProject = qupathGUI.getProject()
+    path = currentProject.getPath()
+    name = GeneralTools.getNameWithoutExtension(new File(path.toString()))
+    OUTPUT_PATH = new File(projectFolder, name + "_" + DEFAULT_OUTPUT_FILENAME).toString()
 }
