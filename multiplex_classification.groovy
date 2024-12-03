@@ -4,9 +4,10 @@ import qupath.lib.objects.PathCellObject
 import qupath.lib.objects.PathRootObject
 import qupath.lib.objects.PathDetectionObject
 import qupath.lib.gui.scripting.QPEx
-import ij.gui.GenericDialog
 import qupath.lib.common.GeneralTools
+import qupath.lib.images.ImageData.ImageType
 
+import ij.gui.GenericDialog
 
 CHANNELS = "DAPI, CD44v6, Ki67"
 CHANNELS = CHANNELS.replaceAll("\\s","")    // Remove whitespace
@@ -24,11 +25,20 @@ CELL_EXPANSION = 5    // micron
 INCLUDE_NUCLEUS = true
 SMOOTH_BOUNDERIES = true
 OUTPUT_PATH = null
+CLASSES = null
+FILTER = "None"
 DEFAULT_OUTPUT_FILENAME = 'measurements.tsv'
+IMAGE_TYPES = ImageType.values().collect{element -> element.toString()}
+IMAGE_TYPES = IMAGE_TYPES.toArray(new String[IMAGE_TYPES.size()])
+IMAGE_TYPE = 'Fluorescence'
+
 main()
 
 def main() {
     def qupathGUI = QPEx.getQuPath()
+    CLASSES = ["None"] + qupathGUI.getAvailablePathClasses().collect{element -> return element.getName()}
+    CLASSES.remove(null)
+    CLASSES = CLASSES.toArray(new String[CLASSES.size()])
     def currentProject = qupathGUI.getProject()
     CLASSIFIER_KEYS = currentProject.getObjectClassifiers().getNames()
     CLASSIFIERS = currentProject.getObjectClassifiers().getNames().toArray(new String[CLASSIFIER_KEYS.size()])
@@ -39,12 +49,13 @@ def main() {
     def listOfChannels = []
     if (batchIndex<1) {
         ok = getOptionsFromUser()
-        if (!ok) return;
+        if (!ok) return
+        saveOptions()
     }
     print(["selected channels", CHANNELS.split(",")])
     print(["selected classifier", SELECTED_CLASSIFIER])
     
-    setImageType('FLUORESCENCE');
+    setImageType(IMAGE_TYPE)
     setChannelNames(
         *CHANNELS.split(",")
     )
@@ -77,19 +88,18 @@ def main() {
     def separator = "\t"
     def columnsToInclude = new String[]{}
     def exportType = PathRootObject.class
-    
-    // Choose your *full* output path
-    def outputPath = "M:/measurements.tsv"
-    def outputFile = new File(outputPath)
-    
+       
     // Create the measurementExporter and start the export
     def exporter  = new MeasurementExporter()
                       .imageList(imagesToExport)            // Images from which measurements will be exported
                       .separator(separator)                 // Character that separates values
                       .includeOnlyColumns(columnsToInclude) // Columns are case-sensitive
                       .exportType(exportType)               // Type of objects to export
-                      .filter(obj -> obj.getPathClass() == getPathClass("Tumor"))    // Keep only objects with class 'Tumor'
-                      .exportMeasurements(outputFile)        // Start the export process
+    if (FILTER != "None") {
+        exporter.filter(obj -> obj.getPathClass() == getPathClass(FILTER))    // Keep only objects with class 'Tumor'
+    }
+    print(["OUTPUT_PATH", OUTPUT_PATH])
+    exporter.exportMeasurements(new File(OUTPUT_PATH))        // Start the export process
 }    
     
 def getProjectFolder() {
@@ -109,13 +119,14 @@ def getOptionsFromUser() {
     gd.setInsets(0, 20, 0)
     gd.addTextAreas(CHANNELS, null, 2, 16)
     gd.addChoice("classifier: ", CLASSIFIERS, SELECTED_CLASSIFIER)
+    gd.addToSameRow()
     gd.addFileField("output file: ", OUTPUT_PATH, 24)
-    
+    gd.addChoice("image type: ", IMAGE_TYPES, IMAGE_TYPE)
     gd.addMessage("Detection Parameters (Setup)")
     gd.addChoice("detection channel: ", CHANNELS.split(","), DETECTION_CHANNEL)
-    gd.addToSameRow()
     gd.addNumericField("pixel size (µm): ", PIXEL_SIZE)  
-    
+    gd.addChoice("filter: ", CLASSES, FILTER)
+    gd.addToSameRow()
     gd.addMessage("Detection Parameters (Nucleus)")
     gd.addNumericField("background radius (µm): ", BACKGROUND_RADIUS)
     gd.addToSameRow()
@@ -142,8 +153,10 @@ def getOptionsFromUser() {
     CHANNELS = CHANNELS.replaceAll("\\s","")    // Remove whitespace
     SELECTED_CLASSIFIER = gd.getNextChoice()
     OUTPUT_PATH = gd.getNextString()
+    IMAGE_TYPE = gd.getNextChoice()
     DETECTION_CHANNEL = gd.getNextChoice()
     PIXEL_SIZE = gd.getNextNumber()
+    FILTER = gd.getNextChoice()
     BACKGROUND_RADIUS = gd.getNextNumber()
     OPENING_BY_RECONSTRUCTION = gd.getNextBoolean()
     MEDIAN_FILTER_RADIUS = gd.getNextNumber()
@@ -166,4 +179,9 @@ def setOutputPath() {
     path = currentProject.getPath()
     name = GeneralTools.getNameWithoutExtension(new File(path.toString()))
     OUTPUT_PATH = new File(projectFolder, name + "_" + DEFAULT_OUTPUT_FILENAME).toString()
+}
+
+
+def saveOptions() {
+    
 }
