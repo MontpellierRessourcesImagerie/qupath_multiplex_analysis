@@ -9,6 +9,8 @@ import qupath.lib.gui.scripting.QPEx
 import qupath.lib.scripting.QP
 import qupath.lib.common.GeneralTools
 import qupath.lib.images.ImageData.ImageType
+import java.nio.file.Files
+import java.nio.charset.StandardCharsets
 import ij.gui.GenericDialog
 
 
@@ -37,7 +39,7 @@ class MultiplexAnalysisOptions {
     protected String[] imageTypes
     protected String[] classifiers
     
-    public String filename
+    static public String filename
     
     def MultiplexAnalysisOptions() {
         this.channels = "DAPI, CD44v6, Ki67"
@@ -138,17 +140,23 @@ class MultiplexAnalysisOptions {
         def gsonBuilder = builder.create()
         def optionsText = gsonBuilder.toJson( this )
         def folder = MultiplexAnalysis.getProjectFolder()
-        new File(folder, this.filename).withWriter { writer ->
-            outputLines.each { 
-                line -> writer.writeLine line
-            }
+        try {
+            Files.writeString(new File(folder, this.filename).toPath(),
+                              optionsText,
+                              StandardCharsets.UTF_8
+            )
+        }
+        catch (IOException ex) {
+            System.out.print("Could not save the options!")
         }
     }
     
-    def readFromFile() {
-        def gson = new Gson()
-        def jsonString = new File(MultiplexAnalysis.getProjectFolder(), this.filename).text 
-        return jsonString
+    def static readFromFile() {
+        def options = new MultiplexAnalysisOptions()
+        def gson = new Gson()        
+        def jsonString = new File(MultiplexAnalysis.getProjectFolder(), MultiplexAnalysisOptions.filename).text 
+        options = gson.fromJson(jsonString, options.class)
+        return options
     }
 }
 
@@ -157,23 +165,28 @@ class MultiplexAnalysis {
 
     protected MultiplexAnalysisOptions options
     protected int batchIndex
+    protected boolean isLast
     
-    def MultiplexAnalysis(int batchIndex) {
+    def MultiplexAnalysis(int batchIndex, boolean isLast) {
         this.options = new MultiplexAnalysisOptions()
         this.batchIndex = batchIndex
+        this.isLast = isLast
     }
+
 
     def run() {      
         if (!this.options.fileExists()) {
             this.options.save() 
         }
-        this.options = gson.fromJson(this.options.readFromFile(), Options)
+        this.options = MultiplexAnalysisOptions.readFromFile()
 
         if (this.batchIndex<1) {
             def ok = this.options.getFromUser()
             if (!ok) return
             this.options.save()
         }
+        
+        clearRootMeasurements()
         
         QP.setImageType(this.options.imageType)
         QP.setChannelNames(
@@ -198,26 +211,27 @@ class MultiplexAnalysis {
             "includeNuclei":'+this.options.includeNucleus+', \
             "smoothBoundaries":'+this.options.smoothBounderies+', \
             "makeMeasurements":true}')
-        QP.runObjectClassifier(this.options.selectedClassifier)
+        QP.runObjectClassifier(this.options.selectedClassifier)       
         
-        
-        /** Export the measurements as a tsv-file */
-        
-        def imagesToExport = QP.getProject().getImageList()
-        def separator = "\t"
-        def columnsToInclude = new String[]{}
-        def exportType = PathRootObject.class
-           
-        // Create the measurementExporter and start the export
-        def exporter  = new MeasurementExporter()
-                          .imageList(imagesToExport)            // Images from which measurements will be exported
-                          .separator(separator)                 // Character that separates values
-                          .includeOnlyColumns(columnsToInclude) // Columns are case-sensitive
-                          .exportType(exportType)               // Type of objects to export
-        if (this.filter != "None") {
-            exporter.filter(obj -> obj.getPathClass() == getPathClass(this.options.filter))    // Keep only objects with class 'Tumor'
+        if (this.isLast) {             
+            /** Export the measurements as a tsv-file */
+            
+            def imagesToExport = QP.getProject().getImageList()
+            def separator = "\t"
+            def columnsToInclude = new String[]{}
+            def exportType = PathRootObject.class
+               
+            // Create the measurementExporter and start the export
+            def exporter  = new MeasurementExporter()
+                              .imageList(imagesToExport)            // Images from which measurements will be exported
+                              .separator(separator)                 // Character that separates values
+                              .includeOnlyColumns(columnsToInclude) // Columns are case-sensitive
+                              .exportType(exportType)               // Type of objects to export
+            if (this.options.filter != "None") {
+                exporter.filter(obj -> obj.getPathClass() == getPathClass(this.options.filter))    // Keep only objects with class 'Tumor'
+            }
+            exporter.exportMeasurements(new File(this.options.outputPath))        // Start the export process
         }
-        exporter.exportMeasurements(new File(this.options.outputPath))        // Start the export process
     }    
         
     def static getProjectFolder() {
@@ -249,5 +263,6 @@ class MultiplexAnalysis {
 
 batchIndex = getProperty(ScriptAttributes.BATCH_INDEX)
 print("Processing image " + (batchIndex + 1))
-analysis = new MultiplexAnalysis(batchIndex)
+batchLast = getProperty(ScriptAttributes.BATCH_LAST)
+analysis = new MultiplexAnalysis(batchIndex, batchLast)
 analysis.run()
