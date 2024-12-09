@@ -12,6 +12,22 @@ import qupath.lib.images.ImageData.ImageType
 import java.nio.file.Files
 import java.nio.charset.StandardCharsets
 import ij.gui.GenericDialog
+import java.lang.System
+
+
+def project = getQuPath().getProject()
+def projectFile = new File(project.getPath().toString())
+def projectFolder = projectFile.getParentFile()
+def scriptsFolder = new File(projectFolder, "scripts")
+def libraryFile = new File(scriptsFolder, "CombinationClassCounter.groovy")
+Class CombinationClassCounter = new GroovyClassLoader(getClass().getClassLoader()).parseClass(libraryFile)
+
+
+def batchIndex = getProperty(ScriptAttributes.BATCH_INDEX)
+print("Processing image " + (batchIndex + 1))
+def batchLast = getProperty(ScriptAttributes.BATCH_LAST)
+def analysis = new MultiplexAnalysis(batchIndex, batchLast, CombinationClassCounter)
+analysis.run()
 
 
 class MultiplexAnalysisOptions {
@@ -166,11 +182,13 @@ class MultiplexAnalysis {
     protected MultiplexAnalysisOptions options
     protected int batchIndex
     protected boolean isLast
+    protected Class combinationClassCounterClass
     
-    def MultiplexAnalysis(int batchIndex, boolean isLast) {
+    def MultiplexAnalysis(int batchIndex, boolean isLast, Class combinationClassCounterClass) {
         this.options = new MultiplexAnalysisOptions()
         this.batchIndex = batchIndex
         this.isLast = isLast
+        this.combinationClassCounterClass = combinationClassCounterClass
     }
 
 
@@ -231,6 +249,8 @@ class MultiplexAnalysis {
                 exporter.filter(obj -> obj.getPathClass() == getPathClass(this.options.filter))    // Keep only objects with class 'Tumor'
             }
             exporter.exportMeasurements(new File(this.options.outputPath))        // Start the export process
+            def ccc = combinationClassCounterClass.newInstance(new File(this.options.outputPath))
+            ccc.run()
         }
     }    
         
@@ -261,8 +281,3 @@ class MultiplexAnalysis {
 }
 
 
-batchIndex = getProperty(ScriptAttributes.BATCH_INDEX)
-print("Processing image " + (batchIndex + 1))
-batchLast = getProperty(ScriptAttributes.BATCH_LAST)
-analysis = new MultiplexAnalysis(batchIndex, batchLast)
-analysis.run()
