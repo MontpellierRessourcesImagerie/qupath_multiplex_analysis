@@ -1,7 +1,7 @@
 # Qupath Multiplex Analysis
 
 <img align='left'  src="https://github.com/user-attachments/assets/1317dabe-5194-4380-8140-bff051d9c6a0" width='40%'/> 
-<img align='top'  src="https://github.com/user-attachments/assets/50c6ce56-9dba-453d-8004-cbff2e487293" width='58%' /)
+<img align='top'  src="https://github.com/user-attachments/assets/50c6ce56-9dba-453d-8004-cbff2e487293" width='56%' /)
 
 The scripts in this project allow to automatically run a multiplex analysis in qupath and add columns for the total numers of each class to the final results table.
 
