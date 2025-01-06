@@ -25,7 +25,7 @@ Before getting started, you might want to read the [multiplex analysis](https://
 
 ### 1. Create a project and import your images
 
-Run the command ``File>Project...>Create Project``. A dialog will open from which you can create and/or select an empty folder, into which the project files will be saved. Open the folder containing your images in your system's filebrowser and drag them onto the ``Image list`` pane of your project in QuPath. On the import dialog, select the image type (for example ``Fluorescence``)) and press the import button.
+Run the command ``File>Project...>Create Project``. A dialog will open from which you can create and/or select an empty folder, into which the project files will be saved. Open the folder containing your images in your system's filebrowser and drag them onto the ``Image list`` pane of your project in QuPath. On the import dialog, select the image type (for example ``Fluorescence``) and press the import button.
 
 Depending on the number, type and size of your images, the import might take a while, since a multi-resolution image pyramid has to be created.
 
