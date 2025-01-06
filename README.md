@@ -7,7 +7,7 @@ The scripts in this project allow to automatically run a multiplex analysis in q
 
 ## Installation
 
-Download the three files [CombinationClassCounter.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/CombinationClassCounter.groovy), [convert_table.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/convert_table.groovy) and [multiplex_classification.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/multiplex_classification.groovy) and save them into the folder ``scripts`` of your qupath project.  
+Download the files [CombinationClassCounter.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/CombinationClassCounter.groovy), [convert_table.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/convert_table.groovy), [multiplex_classification.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/multiplex_classification.groovy) and [set_channel_names.groovy](https://raw.githubusercontent.com/MontpellierRessourcesImagerie/qupath_multiplex_analysis/refs/heads/main/set_channel_names.groovy) and save them into the folder ``scripts`` of your qupath project.  
 
 * The script ``convert_table.groovy`` will add the total numbers for each class to the results table
   * After having analyzed your images, open the script in the script editor (``Automate>Script Editor``).
