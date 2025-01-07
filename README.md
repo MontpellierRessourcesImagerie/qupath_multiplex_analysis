@@ -44,7 +44,7 @@ Run the command ``File>Project...>Create Project``. A dialog will open from whic
 Depending on the number, type and size of your images, the import might take a while, since a multi-resolution image pyramid has to be created.
 
 
-### 2. Setting Channel Names
+### 2. Setting channel names and colors
 
 We will use a script to set the names and colors of the channels of all images in the project.
 
@@ -58,3 +58,12 @@ Close the dialogs and close the image viewer by right-clicking into the image an
 ![image](https://github.com/user-attachments/assets/c0f5ca40-7127-430a-833e-72e462feb7b6)
 
 Enter the names and color-codes and press the ok button.
+
+### 3. Cell Detections
+
+Open an image from the project and make an annotation of a region of interest (this can be the whole image, which you can select with ``ctrl+shift+a``). Open the ``Cell Detection`` dialog from the menu ``Analyze>Cell Detection``. We want to create a cell detector that works on the channel with the nuclei staining (for example DAPI). Adjust the parameters and try them on multiple images, until you get a satisfactory result. Note the parameters.
+
+### 4. Object Classification
+
+For each channel we will create a classifier. The classifier will map each cell to either the class of the channel meaning that the cell is positive for the staining in this channel or to the special class ``Ignore*``. Open an image and if not done yet, make an annotation and run the cell detection. Go to the ``Annotations Tab``. We first need to create a class for each channel. These classes could have the names of the corresponding channels. You can either create them manually using ``Add`` from the context menu of the class list or automatically using the command ``Populate from existing channels``. Note that the classes are attached to the project, not to the image.
+
