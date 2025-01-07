@@ -65,5 +65,12 @@ Open an image from the project and make an annotation of a region of interest (t
 
 ### 4. Object Classification
 
-For each channel we will create a classifier. The classifier will map each cell to either the class of the channel meaning that the cell is positive for the staining in this channel or to the special class ``Ignore*``. Open an image and if not done yet, make an annotation and run the cell detection. Go to the ``Annotations Tab``. We first need to create a class for each channel. These classes could have the names of the corresponding channels. You can either create them manually using ``Add`` from the context menu of the class list or automatically using the command ``Populate from existing channels``. Note that the classes are attached to the project, not to the image.
+For each channel we will create a classifier. The classifier will map each cell to either the class of the channel meaning that the cell is positive for the staining in this channel or to the special class ``Ignore*``. Open an image and if not done yet, make an annotation and run the cell detection. Go to the ``Annotations Tab``. We first need to create a class for each channel. These classes could have the names of the corresponding channels. You can either create them manually using ``Add`` from the context menu of the class list or automatically using the command ``Populate from existing channels``. Note that the classes are attached to the project, not to the image, so they only have to be created once.
+
+Train and save an object classifier for each staining of interest as described in the [qupath documentation](https://qupath.readthedocs.io/en/stable/docs/tutorials/multiplex_analysis.html#train-save-classifiers).
+
+![image](https://github.com/user-attachments/assets/f7fa99d4-1af0-427c-851c-ec5a7948df2e)
+
+### 5. Creation of a composite classifier
+
 
