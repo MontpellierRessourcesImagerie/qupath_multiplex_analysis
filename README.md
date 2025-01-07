@@ -46,3 +46,15 @@ Depending on the number, type and size of your images, the import might take a w
 
 ### 2. Setting Channel Names
 
+We will use a script to set the names and colors of the channels of all images in the project.
+
+We will select the colors for the different channels and note their codes, so that we can use them in the script later. Open one of the images in the project. Open the ``Brightness & Contrast`` dialog (``Shift+c``). Double-click on a channel to open the ``channel properties``. Select a color for the channel and note the hex-code of the color (for example ``#994d66``). If you use one of the named colors, let the mouse-pointer hoover over the color for a moment to get the hex-code.
+
+![image](https://github.com/user-attachments/assets/2e1dc1c4-156f-4f44-a207-a64bba8c3351)
+
+
+Close the dialogs and close the image viewer by right-clicking into the image and choosing ``Multi-view...>Close viewer``. Run the script ``set_channel_names.groovy`` from the script editor (see above) using the ``Run for project`` command.
+
+![image](https://github.com/user-attachments/assets/c0f5ca40-7127-430a-833e-72e462feb7b6)
+
+Enter the names and color-codes and press the ok button.
