@@ -172,6 +172,9 @@ class MultiplexAnalysisOptions {
         def gson = new Gson()        
         def jsonString = new File(MultiplexAnalysis.getProjectFolder(), MultiplexAnalysisOptions.filename).text 
         options = gson.fromJson(jsonString, options.class)
+        def currentProject = QPEx.getQuPath().getProject()
+        def classifierKeys = currentProject.getObjectClassifiers().getNames()
+        options.classifiers = currentProject.getObjectClassifiers().getNames().toArray(new String[classifierKeys.size()])
         return options
     }
 }
