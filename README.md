@@ -73,4 +73,18 @@ Train and save an object classifier for each staining of interest as described i
 
 ### 5. Creation of a composite classifier
 
+Open the dialog from the menu ``Classify>Object classification>Create composite classifier...``.
 
+![Screenshot from 2025-01-07 16-50-41](https://github.com/user-attachments/assets/f59aa12b-5e24-4fd8-b570-35c089275f7a)
+
+Select all the single channel classifier and create and save a composite classifier.
+
+### 6. Multiplex classification
+
+Run the script ``multiplex_classification.groovy`` via the ``Run for project`` command. 
+
+![image](https://github.com/user-attachments/assets/3e6bcb07-d8d9-4945-88b5-1daf036c1d03)
+
+In the dialog, select the composite classifier you created and saved before and fill in the other parameters, using the detection parameters you have noted before. Press the ``OK`` button. The script will run the detection and classifications on the whole project and save the results to ``.tsv``-files. Two output files will be written. The first contains the raw numbers for the classes as they are reported by QuPath. The second adds total numbers for each class using the ``convert_table.groovy`` script.
+
+![image](https://github.com/user-attachments/assets/bf19a1e9-477b-4a76-92c1-e7f30e806d29)
